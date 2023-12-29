@@ -1,8 +1,8 @@
-from datetime import datetime
 import mimetypes
 import os
+from datetime import datetime
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable, Dict, Iterable, Optional, TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 from ..client import Client, register_client_class
 from ..cloudpath import implementation_registry
@@ -13,6 +13,7 @@ try:
     if TYPE_CHECKING:
         from google.auth.credentials import Credentials
 
+    import google.auth
     from google.api_core.exceptions import NotFound
     from google.auth.exceptions import DefaultCredentialsError
     from google.cloud.storage import Client as StorageClient
@@ -85,7 +86,10 @@ class GSClient(Client):
         elif credentials is not None:
             self.client = StorageClient(credentials=credentials, project=project)
         elif application_credentials is not None:
-            self.client = StorageClient.from_service_account_json(application_credentials)
+            credentials, _ = google.auth.load_credentials_from_file(
+                application_credentials,
+            )
+            self.client = StorageClient(credentials=credentials, project=project)
         else:
             try:
                 self.client = StorageClient()
